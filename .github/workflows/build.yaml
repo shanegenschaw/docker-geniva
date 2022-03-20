@@ -29,8 +29,12 @@ jobs:
       - name: Set up environment
         run: |
           APP_VERSION=$(jq -r .version package.json)
+          APP_VERSION_MAJOR=$(jq -r '.version | split(".")[0]' package.json)
+          APP_VERSION_MINOR=$(jq -r '.version | split(".")[1]' package.json)
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          echo "APP_VERSION_MAJOR=$APP_VERSION_MAJOR" >> $GITHUB_ENV
+          echo "APP_VERSION_MINOR=$APP_VERSION_MINOR" >> $GITHUB_ENV
           echo "VERSION_TAG=$APP_VERSION-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "IMAGE_REPOSITORY=$REGISTRY/$DOCKERHUB_USERNAME/$REPO_NAME" >> $GITHUB_ENV
@@ -61,8 +65,9 @@ jobs:
             type=ref,event=tag
             type=ref,event=pr
             type=raw,value=latest
-            type=raw,value=${{ env.VERSION_TAG }}
-            type=raw,value=mytag-{{branch}}-{{sha}}-{{base_ref}}
+            type=raw,value=${{ env.APP_VERSION }}
+            type=raw,value=${{ env.APP_VERSION_MAJOR}}.${{ env.APP_VERSION_MINOR}}
+            type=raw,value=${{ env.APP_VERSION_MAJOR}}
 
       - name: Docker build
         uses: docker/build-push-action@v2
