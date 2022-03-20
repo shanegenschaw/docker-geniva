@@ -56,6 +56,12 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.IMAGE_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=raw,value=latest
+            type=raw,value=${{ env.APP_VERSION }}-$GITHUB_RUN_NUMBER
 
       - name: Docker build
         uses: docker/build-push-action@v2
