@@ -1,0 +1,27 @@
+{
+  "name": "docker-geniva",
+  "version": "2.0.0",
+  "description": "Docker playground experiment",
+  "main": "index.js",
+  "scripts": {
+    "docker:build": "docker build . --file Dockerfile --tag genschsa/docker-geniva:latest",
+    "docker:run": "docker run -d --name geniva -p 8081:80 genschsa/docker-geniva",
+    "docker:rm": "docker rm -f geniva",
+    "restart": "npm run docker:rm && npm run start",
+    "start": "npm run docker:build && npm run docker:run",
+    "test": "curl localhost:8081"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shanegenschaw/docker-geniva.git"
+  },
+  "keywords": [
+    "docker"
+  ],
+  "author": "shanegenschaw",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shanegenschaw/docker-geniva/issues"
+  },
+  "homepage": "https://github.com/shanegenschaw/docker-geniva#readme"
+}
