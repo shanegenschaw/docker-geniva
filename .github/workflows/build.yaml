@@ -12,54 +12,34 @@ defaults:
     shell: bash
 
 env:
+  REGISTRY: docker.io
+  DOCKERHUB_USERNAME: genschsa
   REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
 
   build:
-
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-20.04
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
-      - name: Set up environment
-        run: |
-          APP_VERSION=$(jq -r .version package.json)
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          echo "IMAGE_REPOSITORY=genschsa/$REPO_NAME" >> $GITHUB_ENV
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.IMAGE_REPOSITORY }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=raw,value=latest
-            type=raw,value=${{ env.APP_VERSION }}
 
       - name: Docker build
         uses: docker/build-push-action@v2
         with:
           context: .
           push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REPO_NAME }}:build
 
       - name: Test
         run: |
-          docker run -d --name app -p 8081:80 "${IMAGE_REPOSITORY}:${APP_VERSION}"
+          docker run -d --name app -p 8081:80 "${REPO_NAME}:build"
           sleep 1
           test '200' = $(curl --write-out '%{http_code}' --silent --output /dev/null  localhost:8081)
           docker rm -f app
 
       - name: Check version bump
-        if: github.event_name == 'pull_request'
         run: |
           echo "Fetching origin/main"
           git fetch --depth=1 origin main
@@ -74,9 +54,52 @@ jobs:
             exit 1
           fi
 
+  publish:
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Set up environment
+        run: |
+          APP_VERSION=$(jq -r .version package.json)
+          APP_VERSION_MAJOR=$(jq -r '.version | split(".")[0]' package.json)
+          APP_VERSION_MINOR=$(jq -r '.version | split(".")[1]' package.json)
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+          echo "APP_VERSION_MAJOR=$APP_VERSION_MAJOR" >> $GITHUB_ENV
+          echo "APP_VERSION_MINOR=$APP_VERSION_MINOR" >> $GITHUB_ENV
+          echo "IMAGE_REPOSITORY=$REGISTRY/$DOCKERHUB_USERNAME/$REPO_NAME" >> $GITHUB_ENV
+
       - name: Push version tag
-        if: github.event_name != 'pull_request'
         uses: actions-ecosystem/action-push-tag@v1
         with:
           tag: v${{ env.APP_VERSION }}
           message: 'Release v${{ env.APP_VERSION }}'
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.IMAGE_REPOSITORY }}
+          tags: |
+            type=ref,event=branch
+            type=raw,value=latest
+            type=raw,value=${{ env.APP_VERSION }}
+            type=raw,value=${{ env.APP_VERSION_MAJOR}}.${{ env.APP_VERSION_MINOR}}
+            type=raw,value=${{ env.APP_VERSION_MAJOR}}
+
+      - name: Docker build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
