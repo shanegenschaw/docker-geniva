@@ -1,6 +1,6 @@
 {
   "name": "docker-geniva",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "Docker playground experiment",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "docker:rm": "docker rm -f geniva",
     "restart": "npm run docker:rm && npm run start",
     "start": "npm run docker:build && npm run docker:run",
-    "test": "curl localhost:8081"
+    "test": "test '200' = $(curl --write-out '%{http_code}' --silent --output /dev/null  localhost:8081)"
   },
   "repository": {
     "type": "git",
