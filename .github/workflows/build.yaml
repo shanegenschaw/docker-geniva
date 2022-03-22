@@ -43,11 +43,7 @@ jobs:
           echo "Fetching origin/main"
           git fetch --depth=1 origin main
           echo "Diffing package.json version"
-          NUM_DIFFS=$(git diff origin/main -- package.json | grep '"version":' | wc -l)
-          if [ "$NUM_DIFFS" != 2 ]; then
-            echo "Version bump not detected in package.json."
-            exit 1
-          fi
+          test '0' -lt $(git diff origin/main -- package.json | grep '"version":' | wc -l)
 
   publish:
     runs-on: ubuntu-20.04
