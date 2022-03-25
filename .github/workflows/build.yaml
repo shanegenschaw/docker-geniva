@@ -43,6 +43,7 @@ jobs:
       - name: Check version bump
         run: |
           APP_VERSION=$(jq -r .version package.json)
+          echo "Branches..."
           git branch -v
           echo "Fetching origin/main"
           git fetch --depth=1 origin main
