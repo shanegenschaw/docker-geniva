@@ -14,11 +14,13 @@ defaults:
 env:
   REGISTRY: docker.io
   DOCKERHUB_USERNAME: genschsa
-  REPO_NAME: ${{ github.event.repository.name }}
+  REPO_NAME: docker-geniva
 
 jobs:
   build:
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -41,6 +43,7 @@ jobs:
       - name: Check version bump
         run: |
           APP_VERSION=$(jq -r .version package.json)
+          git branch -v
           echo "Fetching origin/main"
           git fetch --depth=1 origin main
           OLD_VERSION=$(git show "origin/main:package.json" | jq -r .version)
