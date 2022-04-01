@@ -1,9 +1,10 @@
 {
   "name": "docker-geniva",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "description": "Docker playground experiment",
   "main": "index.js",
   "scripts": {
+    "act:build": "act -j build pull_request",
     "bump": "npm --no-git-tag-version version",
     "docker:build": "docker build . --file Dockerfile --tag genschsa/docker-geniva:latest",
     "docker:run": "docker run -d --name geniva -p 8081:80 genschsa/docker-geniva:latest",
