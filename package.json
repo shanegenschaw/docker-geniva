@@ -1,6 +1,6 @@
 {
   "name": "docker-geniva",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "description": "Docker playground experiment",
   "main": "index.js",
   "scripts": {
